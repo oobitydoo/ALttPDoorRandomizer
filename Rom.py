@@ -92,6 +92,7 @@ class LocalRom(object):
             self.write_byte(startaddress + i, value)
 
     def write_to_file(self, file):
+        file = os.path.abspath(file)
         with open(file, 'wb') as outfile:
             outfile.write(self.buffer)
 

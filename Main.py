@@ -168,7 +168,10 @@ def main(args, seed=None):
 
     logger.info('Patching ROM.')
 
-    outfilebase = 'DR_%s' % (args.outputname if args.outputname else world.seed)
+    outfiletag = str(args.outputname if args.outputname else world.seed)
+    outfiledir = os.path.abspath(output_path(os.path.join('generated_seeds', outfiletag)))
+    os.makedirs(outfiledir, exist_ok=True)
+    outfilebase = f'DR_{outfiletag}'
 
     rom_names = []
     jsonout = {}
@@ -226,7 +229,8 @@ def main(args, seed=None):
                                                                               "-retro" if world.retro[player] else "",
                                                                               "-prog_" + world.progressive if world.progressive in ['off', 'random'] else "",
                                                                               "-nohints" if not world.hints[player] else "")) if not args.outputname else ''
-                    rom.write_to_file(output_path(f'{outfilebase}{outfilepname}{outfilesuffix}.sfc'))
+                    outfilename = f'{outfilebase}{outfilepname}{outfilesuffix}.sfc'
+                    rom.write_to_file(os.path.join(outfiledir, outfilename))
 
         if world.players > 1:
             multidata = zlib.compress(json.dumps({"names": parsed_names,
@@ -238,11 +242,11 @@ def main(args, seed=None):
             if args.jsonout:
                 jsonout["multidata"] = list(multidata)
             else:
-                with open(output_path('%s_multidata' % outfilebase), 'wb') as f:
+                with open(os.path.join(outfiledir, f'{outfilebase}_multidata'), 'wb') as f:
                     f.write(multidata)
 
     if args.create_spoiler and not args.jsonout:
-        world.spoiler.to_file(output_path('%s_Spoiler.txt' % outfilebase))
+        world.spoiler.to_file(os.path.join(outfiledir, f'{outfilebase}_Spoiler.txt'))
 
     if not args.skip_playthrough:
         logger.info('Calculating playthrough.')
@@ -251,7 +255,7 @@ def main(args, seed=None):
     if args.jsonout:
         print(json.dumps({**jsonout, 'spoiler': world.spoiler.to_json()}))
     elif args.create_spoiler and not args.skip_playthrough:
-        world.spoiler.to_file(output_path('%s_Spoiler.txt' % outfilebase))
+        world.spoiler.to_file(os.path.join(outfiledir, f'{outfilebase}_Spoiler.txt'))
 
     logger.info('Done. Enjoy.')
     logger.info('Total Time: %s', time.perf_counter() - start)
